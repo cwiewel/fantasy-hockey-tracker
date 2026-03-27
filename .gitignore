@@ -1,0 +1,40 @@
+# Environment & Credentials
+.env
+.env.local
+
+# Data files (personal data, not for repo)
+*.csv
+data/
+
+# Generated output
+*.png
+*.jpg
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+env/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,4 @@
+yfpy>=15.0.3
+pandas
+matplotlib
+python-dotenv
