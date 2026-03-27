@@ -29,8 +29,8 @@ LEAGUE_ID = "30102"
 GAME_CODE = "nhl"
 GAME_ID = 465
 
-# Data file location
-DATA_FILE = "matchup_data.csv"
+# Data file location — can be overridden with DATA_FILE env var on remote servers
+DATA_FILE = os.getenv('DATA_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'matchup_data.csv'))
 
 # ============================================================================
 # MAIN SCRIPT
@@ -153,7 +153,7 @@ def main():
         game_id=GAME_ID,
         yahoo_consumer_key=CLIENT_ID,
         yahoo_consumer_secret=CLIENT_SECRET,
-        env_file_location=Path("."),
+        env_file_location=Path(os.path.dirname(os.path.abspath(__file__))),
         save_token_data_to_env_file=True,  # Save tokens for reuse
         browser_callback=True
     )
