@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 import sys
+import argparse
 
 # ============================================================================
 # CONFIGURATION
@@ -18,15 +19,15 @@ DATA_FILE = "matchup_data.csv"
 # VISUALIZATION FUNCTIONS
 # ============================================================================
 
-def load_data():
+def load_data(data_file=DATA_FILE):
     """Load matchup data from CSV"""
     try:
-        df = pd.read_csv(DATA_FILE)
+        df = pd.read_csv(data_file)
         # Handle mixed timestamp formats (both "2026-02-03 20:18:39" and "2026-02-03T23:28:38.908313")
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='mixed')
         return df
     except FileNotFoundError:
-        print(f"ERROR: Could not find {DATA_FILE}")
+        print(f"ERROR: Could not find {data_file}")
         print("Please run collect_matchup_data.py first to collect data.")
         sys.exit(1)
 
@@ -243,13 +244,21 @@ def print_matchup_summary(matchup_df):
 
 def main():
     """Main function"""
+    parser = argparse.ArgumentParser(description="Visualize fantasy hockey matchup data.")
+    parser.add_argument(
+        "--input",
+        default=DATA_FILE,
+        help=f"CSV file to read (default: {DATA_FILE})",
+    )
+    args = parser.parse_args()
+
     print("Fantasy Hockey Matchup Visualizer")
     print("=" * 70)
     print()
-    
+
     # Load data
     print("Loading data...")
-    df = load_data()
+    df = load_data(args.input)
     print(f"✓ Loaded {len(df)} data points")
     print()
     
