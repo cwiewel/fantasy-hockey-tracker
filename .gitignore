@@ -2,8 +2,8 @@
 .env
 .env.local
 
-# Data files (personal data, not for repo)
-*.csv
+# Data files - exclude mock/test CSVs but track the real data file
+mock_*.csv
 data/
 
 # Generated output
