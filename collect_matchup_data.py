@@ -9,6 +9,13 @@ from datetime import datetime
 import csv
 import os
 
+# Load .env file automatically if present (local dev + GitHub Actions)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=Path(os.path.dirname(os.path.abspath(__file__))) / '.env')
+except ImportError:
+    pass
+
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
