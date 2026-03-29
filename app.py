@@ -4,8 +4,7 @@ Fantasy Hockey Matchup Tracker - Streamlit Web App
 
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+import plotly.graph_objects as go
 from datetime import timedelta
 
 # ============================================================================
@@ -24,7 +23,6 @@ def load_data():
     import urllib.request
     import ssl
     import io
-    # Use certifi certificates; fall back to unverified if unavailable
     try:
         import certifi
         ctx = ssl.create_default_context(cafile=certifi.where())
@@ -99,59 +97,91 @@ def get_matchup_data(df, team_name, week):
 # ============================================================================
 
 def create_matchup_graph(matchup_df, week_start=None, week_end=None):
-    """Create ESPN-style score progression graph."""
+    """Create interactive Plotly score progression graph."""
     my_team = matchup_df['my_team'].iloc[0]
     opp_team = matchup_df['opp_team'].iloc[0]
     week = matchup_df['week'].iloc[0]
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    hover_fmt = '%{x|%a %b %d, %I:%M %p}<br>Score: %{y:.1f}<extra></extra>'
 
-    ax.plot(matchup_df['timestamp'], matchup_df['my_current'],
-            marker='o', linewidth=2, markersize=5,
-            label=f'{my_team} (Current)', color='#2E7D32')
+    fig = go.Figure()
 
-    ax.plot(matchup_df['timestamp'], matchup_df['opp_current'],
-            marker='o', linewidth=2, markersize=5,
-            label=f'{opp_team} (Current)', color='#C62828')
+    # Current scores — solid lines
+    fig.add_trace(go.Scatter(
+        x=matchup_df['timestamp'], y=matchup_df['my_current'],
+        mode='lines+markers',
+        name=f'{my_team}',
+        line=dict(color='#2E7D32', width=3),
+        marker=dict(size=7),
+        hovertemplate=f'<b>{my_team}</b><br>{hover_fmt}',
+    ))
+    fig.add_trace(go.Scatter(
+        x=matchup_df['timestamp'], y=matchup_df['opp_current'],
+        mode='lines+markers',
+        name=f'{opp_team}',
+        line=dict(color='#C62828', width=3),
+        marker=dict(size=7),
+        hovertemplate=f'<b>{opp_team}</b><br>{hover_fmt}',
+    ))
 
-    ax.plot(matchup_df['timestamp'], matchup_df['my_projected'],
-            linestyle='--', linewidth=2,
-            label=f'{my_team} (Projected)', color='#66BB6A', alpha=0.7)
+    # Projected scores — dashed lines
+    fig.add_trace(go.Scatter(
+        x=matchup_df['timestamp'], y=matchup_df['my_projected'],
+        mode='lines',
+        name=f'{my_team} (Projected)',
+        line=dict(color='#66BB6A', width=2, dash='dash'),
+        opacity=0.7,
+        hovertemplate=f'<b>{my_team} Projected</b><br>{hover_fmt}',
+    ))
+    fig.add_trace(go.Scatter(
+        x=matchup_df['timestamp'], y=matchup_df['opp_projected'],
+        mode='lines',
+        name=f'{opp_team} (Projected)',
+        line=dict(color='#EF5350', width=2, dash='dash'),
+        opacity=0.7,
+        hovertemplate=f'<b>{opp_team} Projected</b><br>{hover_fmt}',
+    ))
 
-    ax.plot(matchup_df['timestamp'], matchup_df['opp_projected'],
-            linestyle='--', linewidth=2,
-            label=f'{opp_team} (Projected)', color='#EF5350', alpha=0.7)
-
-    ax.set_xlabel('Time', fontsize=11, fontweight='bold')
-    ax.set_ylabel('Points', fontsize=11, fontweight='bold')
-    ax.set_title(f'Week {week}: {my_team} vs {opp_team}', fontsize=13, fontweight='bold', pad=15)
+    # X-axis range
+    if week_start and week_end:
+        x_range = [week_start, week_end]
+    elif len(matchup_df) == 1:
+        center = matchup_df['timestamp'].iloc[0]
+        x_range = [center - timedelta(days=3), center + timedelta(days=3)]
+    else:
+        time_range = matchup_df['timestamp'].max() - matchup_df['timestamp'].min()
+        padding = max(timedelta(hours=12), time_range * 0.1)
+        x_range = [
+            matchup_df['timestamp'].min() - padding,
+            matchup_df['timestamp'].max() + padding,
+        ]
 
     max_value = max(
         matchup_df['my_current'].max(), matchup_df['opp_current'].max(),
         matchup_df['my_projected'].max(), matchup_df['opp_projected'].max()
     )
-    ax.set_ylim(0, max(100, max_value * 1.1))
 
-    ax.grid(True, alpha=0.3, linestyle=':', linewidth=0.5)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%a %m/%d\n%I:%M %p'))
-    fig.autofmt_xdate()
+    fig.update_layout(
+        title=dict(text=f'Week {week}: {my_team} vs {opp_team}', font=dict(size=18)),
+        xaxis=dict(
+            title='Time',
+            range=x_range,
+            tickformat='%a %m/%d\n%I %p',
+            showgrid=True,
+            gridcolor='rgba(0,0,0,0.08)',
+        ),
+        yaxis=dict(
+            title='Points',
+            range=[0, max(100, max_value * 1.1)],
+            showgrid=True,
+            gridcolor='rgba(0,0,0,0.08)',
+        ),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+        hovermode='x unified',
+        plot_bgcolor='white',
+        height=500,
+    )
 
-    if week_start and week_end:
-        ax.set_xlim([week_start, week_end])
-    else:
-        if len(matchup_df) == 1:
-            center = matchup_df['timestamp'].iloc[0]
-            ax.set_xlim([center - timedelta(days=3), center + timedelta(days=3)])
-        else:
-            time_range = matchup_df['timestamp'].max() - matchup_df['timestamp'].min()
-            padding = max(timedelta(hours=12), time_range * 0.1)
-            ax.set_xlim([
-                matchup_df['timestamp'].min() - padding,
-                matchup_df['timestamp'].max() + padding
-            ])
-
-    ax.legend(loc='best', framealpha=0.9, fontsize=10)
-    plt.tight_layout()
     return fig
 
 
@@ -216,8 +246,7 @@ else:
 
     # Graph
     fig = create_matchup_graph(matchup_df, week_start, week_end)
-    st.pyplot(fig)
-    plt.close(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
     # Data freshness
     last_update = matchup_df['timestamp'].max()
