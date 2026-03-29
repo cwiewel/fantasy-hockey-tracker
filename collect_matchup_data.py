@@ -40,6 +40,19 @@ GAME_ID = 465
 DATA_FILE = os.getenv('DATA_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'matchup_data.csv'))
 
 # ============================================================================
+# HELPERS
+# ============================================================================
+
+def clean_name(name):
+    """Strip byte-string artifacts like b'...' or b\"...\" from yfpy team names."""
+    s = str(name)
+    if s.startswith("b'") and s.endswith("'"):
+        return s[2:-1]
+    if s.startswith('b"') and s.endswith('"'):
+        return s[2:-1]
+    return s
+
+# ============================================================================
 # MAIN SCRIPT
 # ============================================================================
 
@@ -86,14 +99,14 @@ def get_all_matchups_data(yahoo_query, current_week):
                 team2_projected = float(live_proj['total'])
         
         matchup_data = {
-            'timestamp': datetime.now().isoformat(),
+            'timestamp': datetime.utcnow().isoformat(),
             'week': current_week,
             'week_start': str(week_start) if week_start else None,
             'week_end': str(week_end) if week_end else None,
-            'team1_name': str(team1.name).replace("b'", "").replace("'", ""),
+            'team1_name': clean_name(team1.name),
             'team1_current_score': float(team1.team_points.total),
             'team1_projected_score': team1_projected,
-            'team2_name': str(team2.name).replace("b'", "").replace("'", ""),
+            'team2_name': clean_name(team2.name),
             'team2_current_score': float(team2.team_points.total),
             'team2_projected_score': team2_projected
         }   
