@@ -44,13 +44,10 @@ DATA_FILE = os.getenv('DATA_FILE', os.path.join(os.path.dirname(os.path.abspath(
 # ============================================================================
 
 def clean_name(name):
-    """Strip byte-string artifacts like b'...' or b\"...\" from yfpy team names."""
-    s = str(name)
-    if s.startswith("b'") and s.endswith("'"):
-        return s[2:-1]
-    if s.startswith('b"') and s.endswith('"'):
-        return s[2:-1]
-    return s
+    """Decode yfpy team names, which are sometimes returned as bytes objects."""
+    if isinstance(name, bytes):
+        return name.decode('utf-8')
+    return str(name)
 
 # ============================================================================
 # MAIN SCRIPT
