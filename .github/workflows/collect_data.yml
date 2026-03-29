@@ -2,9 +2,22 @@ name: Collect Matchup Data
 
 on:
   schedule:
-    # Run every 2 hours during NHL season (Oct-Apr)
-    # Cron syntax: minute hour day month weekday
+    # All times UTC (EST + 5hrs)
+    #
+    # GAME WINDOWS - every 30 min:
+    #   Sat  12:00pm-1:00am EST = 17:00-06:00 UTC (Sun morning)
+    - cron: '0,30 17-23 * * 6'    # Sat 17:00-23:30 UTC
+    - cron: '0,30 0-6  * * 0'     # Sat night into Sun 00:00-06:00 UTC
+    #   Sun  12:30pm-12:30am EST = 17:30-05:30 UTC (Mon morning)
+    - cron: '0,30 17-23 * * 0'    # Sun 17:00-23:30 UTC
+    - cron: '0,30 0-5  * * 1'     # Sun night into Mon 00:00-05:30 UTC
+    #   Mon-Fri  6:30pm-1:30am EST = 23:30-06:30 UTC (next day)
+    - cron: '0,30 23   * * 1-5'   # Mon-Fri 23:00-23:30 UTC
+    - cron: '0,30 0-6  * * 2-6'   # Tue-Sat 00:00-06:30 UTC (overnight after Mon-Fri games)
+    #
+    # OFF-PEAK - every 2 hours (covers all other times)
     - cron: '0 */2 * * *'
+    #
   workflow_dispatch:  # Allow manual trigger from GitHub UI
 
 jobs:
