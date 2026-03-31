@@ -2,5 +2,5 @@ yfpy>=15.0.3
 pandas
 matplotlib
 python-dotenv
-streamlit
+streamlit>=1.40.0
 plotly
