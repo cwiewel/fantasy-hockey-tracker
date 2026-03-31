@@ -236,11 +236,17 @@ else:
     opp_team = matchup_df['opp_team'].iloc[0]
 
     # Score summary
+    def score_delta(col):
+        if len(matchup_df) >= 2:
+            d = round(matchup_df[col].iloc[-1] - matchup_df[col].iloc[-2], 1)
+            return d if d != 0 else None
+        return None
+
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(f"{my_team}", f"{latest['my_current']:.1f}", "Current")
-    col2.metric(f"{opp_team}", f"{latest['opp_current']:.1f}", "Current")
-    col3.metric(f"{my_team}", f"{latest['my_projected']:.1f}", "Projected")
-    col4.metric(f"{opp_team}", f"{latest['opp_projected']:.1f}", "Projected")
+    col1.metric(f"{my_team}", f"{latest['my_current']:.1f}", score_delta('my_current'), help="Current score · delta since last update")
+    col2.metric(f"{opp_team}", f"{latest['opp_current']:.1f}", score_delta('opp_current'), help="Current score · delta since last update")
+    col3.metric(f"{my_team} (Proj)", f"{latest['my_projected']:.1f}", score_delta('my_projected'), help="Projected final score · delta since last update")
+    col4.metric(f"{opp_team} (Proj)", f"{latest['opp_projected']:.1f}", score_delta('opp_projected'), help="Projected final score · delta since last update")
 
     st.divider()
 
