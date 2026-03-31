@@ -235,18 +235,17 @@ else:
     my_team = matchup_df['my_team'].iloc[0]
     opp_team = matchup_df['opp_team'].iloc[0]
 
-    # Score summary
+    # Score summary — show change since last data point
     def score_delta(col):
         if len(matchup_df) >= 2:
-            d = round(matchup_df[col].iloc[-1] - matchup_df[col].iloc[-2], 1)
-            return d if d != 0 else None
-        return None
+            return round(matchup_df[col].iloc[-1] - matchup_df[col].iloc[-2], 1)
+        return "—"
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(f"{my_team}", f"{latest['my_current']:.1f}", score_delta('my_current'), help="Current score · delta since last update")
-    col2.metric(f"{opp_team}", f"{latest['opp_current']:.1f}", score_delta('opp_current'), help="Current score · delta since last update")
-    col3.metric(f"{my_team} (Proj)", f"{latest['my_projected']:.1f}", score_delta('my_projected'), help="Projected final score · delta since last update")
-    col4.metric(f"{opp_team} (Proj)", f"{latest['opp_projected']:.1f}", score_delta('opp_projected'), help="Projected final score · delta since last update")
+    col1.metric(f"{my_team}", f"{latest['my_current']:.1f}", score_delta('my_current'))
+    col2.metric(f"{opp_team}", f"{latest['opp_current']:.1f}", score_delta('opp_current'))
+    col3.metric(f"{my_team} (Proj)", f"{latest['my_projected']:.1f}", score_delta('my_projected'))
+    col4.metric(f"{opp_team} (Proj)", f"{latest['opp_projected']:.1f}", score_delta('opp_projected'))
 
     st.divider()
 
