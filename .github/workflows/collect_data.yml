@@ -10,6 +10,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -34,5 +37,12 @@ jobs:
       - name: Collect matchup data
         run: python collect_matchup_data.py
         env:
-          GIST_ID: ${{ secrets.GIST_ID }}
-          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          DATA_FILE: matchup_data.csv
+
+      - name: Commit and push updated CSV
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add matchup_data.csv
+          git diff --cached --quiet || git commit -m "chore: collect matchup data $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
