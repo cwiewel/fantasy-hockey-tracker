@@ -7,7 +7,10 @@ from yfpy.query import YahooFantasySportsQuery
 from pathlib import Path
 from datetime import datetime
 import csv
+import io
+import json
 import os
+import urllib.request
 
 # Load .env file automatically if present (local dev + GitHub Actions)
 try:
@@ -38,6 +41,10 @@ GAME_ID = 465
 
 # Data file location — can be overridden with DATA_FILE env var on remote servers
 DATA_FILE = os.getenv('DATA_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'matchup_data.csv'))
+
+# Gist credentials — if set, data is written to GitHub Gist instead of local CSV
+GIST_ID = os.getenv('GIST_ID')
+GIST_TOKEN = os.getenv('GIST_TOKEN')
 
 # ============================================================================
 # HELPERS
@@ -111,6 +118,52 @@ def get_all_matchups_data(yahoo_query, current_week):
         all_matchups.append(matchup_data)
     
     return all_matchups, week_start, week_end
+
+
+def save_to_gist(matchups_data):
+    """
+    Append new matchup rows to the matchup_data.csv Gist.
+    Fetches current content, appends new rows, and PATCHes the Gist.
+    """
+    api_url = f'https://api.github.com/gists/{GIST_ID}'
+    headers = {
+        'Authorization': f'token {GIST_TOKEN}',
+        'Accept': 'application/vnd.github+json',
+    }
+
+    # Fetch current Gist content
+    req = urllib.request.Request(api_url, headers=headers)
+    with urllib.request.urlopen(req) as resp:
+        gist_data = json.loads(resp.read())
+    current_content = gist_data['files']['matchup_data.csv']['content']
+
+    # Append new rows to existing CSV
+    output = io.StringIO()
+    output.write(current_content)
+    if not current_content.endswith('\n'):
+        output.write('\n')
+
+    fieldnames = [
+        'timestamp', 'week', 'week_start', 'week_end',
+        'team1_name', 'team1_current_score', 'team1_projected_score',
+        'team2_name', 'team2_current_score', 'team2_projected_score',
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    for matchup in matchups_data:
+        writer.writerow(matchup)
+
+    # PATCH Gist with updated content
+    payload = json.dumps({
+        'files': {'matchup_data.csv': {'content': output.getvalue()}}
+    }).encode('utf-8')
+    patch_req = urllib.request.Request(
+        api_url, data=payload, method='PATCH',
+        headers={**headers, 'Content-Type': 'application/json'},
+    )
+    with urllib.request.urlopen(patch_req) as resp:
+        resp.read()
+
+    print(f"Updated Gist with {len(matchups_data)} new rows")
 
 
 def save_to_csv(matchups_data):
@@ -205,9 +258,12 @@ def main():
     print("-" * 60)
     print()
     
-    # Save to CSV
+    # Save data — use Gist if credentials are available, otherwise local CSV
     print("Saving data...")
-    save_to_csv(matchups_data)
+    if GIST_ID and GIST_TOKEN:
+        save_to_gist(matchups_data)
+    else:
+        save_to_csv(matchups_data)
     print()
     
     print("=" * 60)
