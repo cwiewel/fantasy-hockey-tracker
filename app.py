@@ -134,21 +134,19 @@ def create_matchup_graph(matchup_df, week_start=None, week_end=None, compact=Fal
         hovertemplate=f'<b>{opp_team}</b><br>{hover_fmt}',
     ))
 
-    # Projected scores — dashed lines
+    # Projected scores — same color, faded
     fig.add_trace(go.Scatter(
         x=matchup_df['timestamp'], y=matchup_df['my_projected'],
         mode='lines',
         name=f'{my_team} (Projected)',
-        line=dict(color='#66BB6A', width=2 if not compact else 1.5, dash='dash'),
-        opacity=0.7,
+        line=dict(color='rgba(46,125,50,0.3)', width=2 if not compact else 1.5),
         hovertemplate=f'<b>{my_team} Projected</b><br>{hover_fmt}',
     ))
     fig.add_trace(go.Scatter(
         x=matchup_df['timestamp'], y=matchup_df['opp_projected'],
         mode='lines',
         name=f'{opp_team} (Projected)',
-        line=dict(color='#EF5350', width=2 if not compact else 1.5, dash='dash'),
-        opacity=0.7,
+        line=dict(color='rgba(198,40,40,0.3)', width=2 if not compact else 1.5),
         hovertemplate=f'<b>{opp_team} Projected</b><br>{hover_fmt}',
     ))
 
